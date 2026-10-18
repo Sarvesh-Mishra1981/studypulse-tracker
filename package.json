@@ -1,0 +1,18 @@
+{
+  "name": "studypulse-daily-tracker",
+  "version": "1.0.0",
+  "description": "Daily Study Hours Graph Tracker with Lecture vs Revision breakdown and Google Sign-In",
+  "scripts": {
+    "start": "python3 -m http.server 8080",
+    "deploy:surge": "npx surge .",
+    "tunnel": "npx localtunnel --port 8080"
+  },
+  "keywords": [
+    "study-tracker",
+    "graph",
+    "lecture-time",
+    "revision-time",
+    "google-signin"
+  ],
+  "license": "MIT"
+}

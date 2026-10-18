@@ -1,0 +1,371 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>StudyPulse — Date-Wise Study & Revision Tracker</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@600;700&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap" rel="stylesheet" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <!-- Minimalist Top Header -->
+  <header class="topbar">
+    <div class="topbar-inner">
+      <div class="brand">
+        <div class="brand-logo">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M3 3v18h18" />
+            <path d="m19 9-5 5-4-4-3 3" />
+          </svg>
+        </div>
+        <span class="brand-title">StudyPulse</span>
+      </div>
+
+      <!-- Compact Summary Pills in Header -->
+      <div class="header-metrics">
+        <div class="metric-chip">
+          <span class="metric-label">Total</span>
+          <strong id="statTotalHours">0.0h</strong>
+        </div>
+        <div class="metric-chip lecture">
+          <span class="dot lecture"></span>
+          <span class="metric-label">Lecture</span>
+          <strong id="statLectureHours">0.0h</strong>
+        </div>
+        <div class="metric-chip revision">
+          <span class="dot revision"></span>
+          <span class="metric-label">Revision</span>
+          <strong id="statRevisionHours">0.0h</strong>
+        </div>
+        <div class="metric-chip">
+          <span class="metric-label">Daily Avg</span>
+          <strong id="statAvgHours">0.0h</strong>
+        </div>
+      </div>
+
+      <!-- Right Auth Actions -->
+      <div class="auth-Cluster">
+        <button id="syncStatusBtn" class="status-pill" title="Cloud Sync Settings">
+          <span id="syncDot" class="status-dot local"></span>
+          <span id="syncStatusText">Local</span>
+        </button>
+
+        <button id="googleSignInBtn" class="btn-google">
+          <svg viewBox="0 0 24 24" width="16" height="16">
+            <path fill="#EA4335" d="M12 5c1.6 0 3 .6 4.1 1.7l3.1-3.1C17.3 1.8 14.8 1 12 1 7.4 1 3.5 3.6 1.6 7.4l3.7 2.8C6.2 7.2 8.9 5 12 5z"/>
+            <path fill="#4285F4" d="M23.5 12.3c0-.8-.1-1.6-.2-2.3H12v4.5h6.5c-.3 1.5-1.1 2.8-2.4 3.6l3.7 2.9c2.2-2 3.7-5 3.7-8.7z"/>
+            <path fill="#FBBC05" d="M5.3 14.8c-.2-.8-.4-1.6-.4-2.5s.2-1.7.4-2.5L1.6 7C.6 9 0 11.2 0 13.5s.6 4.5 1.6 6.5l3.7-2.9z"/>
+            <path fill="#34A853" d="M12 24c3.2 0 6-1.1 8-3l-3.7-2.9c-1.1.7-2.5 1.2-4.3 1.2-3.1 0-5.8-2.1-6.7-5l-3.7 2.8C3.5 20.9 7.4 24 12 24z"/>
+          </svg>
+          <span>Sign in with Google</span>
+        </button>
+
+        <div id="userProfileBar" class="user-badge hidden">
+          <img id="userAvatar" src="" alt="Avatar" class="avatar-img" />
+          <span id="userName" class="user-name-text">Student</span>
+          <button id="signOutBtn" class="icon-btn" title="Sign out">✕</button>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main class="app-shell">
+    <!-- 1. DATE-WISE CALENDAR RIBBON -->
+    <section class="date-ribbon-bar">
+      <div class="date-ribbon-left">
+        <button type="button" id="prevDayBtn" class="nav-arrow" title="Previous Day">‹</button>
+        <div class="active-date-display">
+          <input type="date" id="studyDate" class="date-picker-native" aria-label="Pick study date" />
+          <span id="selectedDateLabel" class="selected-date-human">Today</span>
+        </div>
+        <button type="button" id="nextDayBtn" class="nav-arrow" title="Next Day">›</button>
+        <button type="button" id="todayJumpBtn" class="btn-today">Today</button>
+      </div>
+
+      <!-- 7-Day Interactive Date Strip -->
+      <div id="dateStripContainer" class="date-strip">
+        <!-- Rendered dynamically by app.js -->
+      </div>
+    </section>
+
+    <!-- 2. CLEAN TWO-COLUMN WORKSPACE -->
+    <section class="main-grid">
+      <!-- LEFT CARD: Selected Date Timers & Entry -->
+      <aside class="card date-control-card">
+        <!-- Selected Date Summary Header -->
+        <div class="date-summary-header">
+          <div>
+            <span class="eyebrow">SELECTED DATE</span>
+            <h2 id="cardDateTitle" class="card-date-title">Sun, Oct 18</h2>
+          </div>
+          <div class="date-total-pill">
+            <span class="total-num" id="selectedDateTotal">0.0h</span>
+            <span class="total-sub" id="selectedDateSplit">0h Lec • 0h Rev</span>
+          </div>
+        </div>
+
+        <!-- Clean Mode Tabs: Live Timers vs Manual Hours -->
+        <div class="mode-tabs" role="tablist">
+          <button type="button" class="mode-tab active" data-tab="timer">
+            ⏱️ Live Timers
+          </button>
+          <button type="button" class="mode-tab" data-tab="manual">
+            ✏️ Manual Hours
+          </button>
+        </div>
+
+        <!-- TAB 1: DUAL STUDY TIMERS (Lecture Timer & Revision Timer) -->
+        <div id="timerTabPane" class="tab-pane">
+          <div class="timers-stack">
+            <!-- Lecture Timer Box -->
+            <div id="lectureTimerCard" class="timer-box lecture">
+              <div class="timer-top">
+                <div class="timer-title-group">
+                  <span class="dot lecture"></span>
+                  <div>
+                    <h3>Lecture Timer</h3>
+                    <p>Classes, video lectures, coaching</p>
+                  </div>
+                </div>
+                <span id="lectureTimerBadge" class="timer-state-badge">Paused</span>
+              </div>
+
+              <div class="timer-clock" id="lectureClockDisplay">00:00:00</div>
+
+              <div class="timer-controls">
+                <button type="button" id="lectureStartPauseBtn" class="t-btn primary-lecture">
+                  ▶ Start Lecture
+                </button>
+                <button type="button" id="lectureResetBtn" class="t-btn subtle" title="Reset timer">
+                  Reset
+                </button>
+              </div>
+            </div>
+
+            <!-- Revision Timer Box -->
+            <div id="revisionTimerCard" class="timer-box revision">
+              <div class="timer-top">
+                <div class="timer-title-group">
+                  <span class="dot revision"></span>
+                  <div>
+                    <h3>Revision Timer</h3>
+                    <p>Self-study, notes review, practice</p>
+                  </div>
+                </div>
+                <span id="revisionTimerBadge" class="timer-state-badge">Paused</span>
+              </div>
+
+              <div class="timer-clock" id="revisionClockDisplay">00:00:00</div>
+
+              <div class="timer-controls">
+                <button type="button" id="revisionStartPauseBtn" class="t-btn primary-revision">
+                  ▶ Start Revision
+                </button>
+                <button type="button" id="revisionResetBtn" class="t-btn subtle" title="Reset timer">
+                  Reset
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Save Timer Session to Selected Date -->
+          <div class="timer-save-footer">
+            <div class="timer-session-preview" id="timerSessionPreview">
+              Timer session: <strong>0m Lecture</strong> + <strong>0m Revision</strong>
+            </div>
+            <button type="button" id="saveTimersToDateBtn" class="btn-primary-action">
+              + Add Timer Hours to Selected Date &amp; Plot
+            </button>
+          </div>
+        </div>
+
+        <!-- TAB 2: MANUAL HOURS ENTRY FOR SELECTED DATE -->
+        <form id="studyForm" class="tab-pane hidden">
+          <div class="manual-inputs-grid">
+            <!-- Lecture Input -->
+            <div class="field-card lecture">
+              <div class="field-top">
+                <label for="lectureHours"><span class="dot lecture"></span> Lecture Hours</label>
+                <div class="quick-pills">
+                  <button type="button" class="q-pill" data-target="lectureHours" data-add="0.5">+0.5h</button>
+                  <button type="button" class="q-pill" data-target="lectureHours" data-add="1">+1h</button>
+                  <button type="button" class="q-pill" data-target="lectureHours" data-clear="true">0</button>
+                </div>
+              </div>
+              <div class="slider-input-row">
+                <input type="number" id="lectureHours" min="0" max="24" step="0.1" value="0" required class="num-input" />
+                <input type="range" id="lectureSlider" min="0" max="12" step="0.25" value="0" class="slider lecture" />
+              </div>
+            </div>
+
+            <!-- Revision Input -->
+            <div class="field-card revision">
+              <div class="field-top">
+                <label for="revisionHours"><span class="dot revision"></span> Revision Hours</label>
+                <div class="quick-pills">
+                  <button type="button" class="q-pill" data-target="revisionHours" data-add="0.5">+0.5h</button>
+                  <button type="button" class="q-pill" data-target="revisionHours" data-add="1">+1h</button>
+                  <button type="button" class="q-pill" data-target="revisionHours" data-clear="true">0</button>
+                </div>
+              </div>
+              <div class="slider-input-row">
+                <input type="number" id="revisionHours" min="0" max="24" step="0.1" value="0" required class="num-input" />
+                <input type="range" id="revisionSlider" min="0" max="12" step="0.25" value="0" class="slider revision" />
+              </div>
+            </div>
+          </div>
+
+          <div class="notes-field">
+            <label for="studyNotes">Topics / Notes for this date <span class="muted">(optional)</span></label>
+            <input type="text" id="studyNotes" placeholder="e.g. Physics Ch.4 lecture + PYQ revision" class="text-input" />
+          </div>
+
+          <div class="manual-preview-bar">
+            <span id="liveBreakdownText">0h Lecture + 0h Revision</span>
+            <strong id="liveTotalBadge">Total: 0.0 hrs</strong>
+          </div>
+
+          <button type="submit" class="btn-primary-action">
+            Save Date Entry &amp; Update Graph
+          </button>
+        </form>
+      </aside>
+
+      <!-- RIGHT CARD: Date-Wise Graph & Date Log -->
+      <section class="card graph-and-log-card">
+        <div class="graph-header">
+          <div>
+            <h2 class="section-title">Date-Wise Study Graph</h2>
+            <p class="section-sub">Click any bar or point on the graph to inspect or edit that date</p>
+          </div>
+
+          <div class="graph-toolbar">
+            <!-- Chart Type -->
+            <div class="seg-group" id="chartTypeControl">
+              <button type="button" class="seg-item active" data-chart-type="stacked">Stacked Bars</button>
+              <button type="button" class="seg-item" data-chart-type="lines">Lines</button>
+            </div>
+
+            <!-- Date Range -->
+            <select id="rangeSelect" class="clean-select" aria-label="Date range">
+              <option value="7">Last 7 Days (Calendar)</option>
+              <option value="14" selected>Last 14 Days (Calendar)</option>
+              <option value="30">Last 30 Days</option>
+              <option value="logged">Logged Dates Only</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Main Chart Canvas -->
+        <div class="canvas-box">
+          <canvas id="studyChart"></canvas>
+        </div>
+
+        <!-- Compact Legend & Ratio Bar -->
+        <div class="graph-summary-strip">
+          <div class="legend-row">
+            <span class="leg"><i class="swatch lecture"></i> Lecture Time</span>
+            <span class="leg"><i class="swatch revision"></i> Revision Time</span>
+            <span class="leg"><i class="swatch total"></i> Total Trend</span>
+          </div>
+          <div class="overall-split-mini">
+            <span id="statLecturePct">50% Lecture</span>
+            <div class="mini-progress">
+              <div id="statLectureBar" class="mini-fill lecture" style="width: 50%"></div>
+              <div id="statRevisionBar" class="mini-fill revision" style="width: 50%"></div>
+            </div>
+            <span id="statRevisionPct">50% Revision</span>
+          </div>
+        </div>
+
+        <!-- Collapsible / Clean Date-Wise Log List -->
+        <div class="date-log-section">
+          <div class="date-log-header">
+            <h3>Date-Wise Study Log</h3>
+            <div class="log-tools">
+              <input type="search" id="searchLogs" placeholder="Filter date or topic..." class="clean-search" />
+              <button type="button" id="loadSampleBtn" class="btn-ghost">Sample Week</button>
+              <button type="button" id="exportCsvBtn" class="btn-ghost">Export CSV</button>
+              <button type="button" id="clearAllBtn" class="btn-ghost danger">Clear</button>
+            </div>
+          </div>
+
+          <div class="table-scroll">
+            <table class="clean-table">
+              <thead>
+                <tr>
+                  <th>Date</th>
+                  <th>Lecture</th>
+                  <th>Revision</th>
+                  <th>Total</th>
+                  <th>Topics / Notes</th>
+                  <th class="text-right">Action</th>
+                </tr>
+              </thead>
+              <tbody id="logsTableBody"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+    </section>
+  </main>
+
+  <!-- Google Sign-In & Firebase Modal -->
+  <div id="authModal" class="modal-backdrop hidden" role="dialog" aria-modal="true">
+    <div class="modal-box">
+      <div class="modal-top">
+        <div>
+          <h2>Sign in with Google</h2>
+          <p>Save your daily study logs and sync across devices.</p>
+        </div>
+        <button type="button" id="closeModalBtn" class="icon-btn">✕</button>
+      </div>
+
+      <div class="modal-content">
+        <div class="auth-block">
+          <span class="badge-tag">Instant Browser Sign-In</span>
+          <form id="quickGoogleForm" class="quick-form">
+            <input type="text" id="quickName" placeholder="Your Name" required class="text-input" />
+            <input type="email" id="quickEmail" placeholder="your.email@gmail.com" required class="text-input" />
+            <button type="submit" class="btn-google full">
+              <svg viewBox="0 0 24 24" width="16" height="16">
+                <path fill="#EA4335" d="M12 5c1.6 0 3 .6 4.1 1.7l3.1-3.1C17.3 1.8 14.8 1 12 1 7.4 1 3.5 3.6 1.6 7.4l3.7 2.8C6.2 7.2 8.9 5 12 5z"/>
+                <path fill="#4285F4" d="M23.5 12.3c0-.8-.1-1.6-.2-2.3H12v4.5h6.5c-.3 1.5-1.1 2.8-2.4 3.6l3.7 2.9c2.2-2 3.7-5 3.7-8.7z"/>
+                <path fill="#FBBC05" d="M5.3 14.8c-.2-.8-.4-1.6-.4-2.5s.2-1.7.4-2.5L1.6 7C.6 9 0 11.2 0 13.5s.6 4.5 1.6 6.5l3.7-2.9z"/>
+                <path fill="#34A853" d="M12 24c3.2 0 6-1.1 8-3l-3.7-2.9c-1.1.7-2.5 1.2-4.3 1.2-3.1 0-5.8-2.1-6.7-5l-3.7 2.8C3.5 20.9 7.4 24 12 24z"/>
+              </svg>
+              <span>Continue with Google Account</span>
+            </button>
+          </form>
+        </div>
+
+        <div class="or-divider"><span>OR FIREBASE CLOUD OAUTH</span></div>
+
+        <div class="auth-block">
+          <span class="badge-tag cloud">Firebase Google OAuth + Firestore</span>
+          <textarea
+            id="firebaseConfigInput"
+            rows="4"
+            class="text-input mono"
+            placeholder='Paste Firebase config JSON: {"apiKey":"...","authDomain":"...","projectId":"..."}'
+          ></textarea>
+          <div class="modal-btn-row">
+            <button type="button" id="saveFirebaseConfigBtn" class="btn-primary-action">
+              Connect Firebase &amp; Sign In
+            </button>
+            <button type="button" id="clearFirebaseConfigBtn" class="btn-ghost">Reset</button>
+          </div>
+          <p id="firebaseModalStatus" class="status-msg"></p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="toast" class="toast hidden"></div>
+
+  <script type="module" src="app.js"></script>
+</body>
+</html>
